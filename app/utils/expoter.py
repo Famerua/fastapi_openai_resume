@@ -28,6 +28,6 @@ def generate_resume_docx(
         if title_file
         else "resume_agent_demo.docx"
     )
-    path = Path(name)
+    path = Path(f"files/{name}")
     doc.save(path)
     return path
