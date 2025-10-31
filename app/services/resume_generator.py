@@ -1,13 +1,13 @@
 from openai import OpenAI, APIConnectionError, AuthenticationError
 import httpx
 from app.core.config import settings
-from app.models import ResumeResponse
+from app.models import ResumeResponse, ResumeRequest
 from app.consts import RESPONSE_BLOCKS, LANGUAGES
 
 client = OpenAI(api_key=settings.openai_api_key.get_secret_value())
 
 
-def get_system_msg(lang: str):
+def get_system_msg(lang: str) -> str:
     blocks = RESPONSE_BLOCKS[lang]
     return (
         "You are a professional resume writer.\n"
@@ -28,7 +28,7 @@ def get_system_msg(lang: str):
     ).format(lang=LANGUAGES[lang])
 
 
-def request(input_data: dict, lang: str):
+def request(input_data: ResumeRequest, lang: str):
     system_msg = get_system_msg(lang)
     try:
         response = client.responses.parse(
@@ -37,11 +37,11 @@ def request(input_data: dict, lang: str):
             input=[
                 {"role": "system", "content": system_msg},
                 {
-                    "role": "user", 
+                    "role": "user",
                     "content": (
                         f"Build resume from JSON (respond in {LANGUAGES[lang]}):\n{input_data}\n"
                         "Return JSON with keys 'resume_text' and 'summary' only."
-                    )
+                    ),
                 },
             ],
         )
