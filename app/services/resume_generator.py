@@ -2,18 +2,47 @@ from openai import OpenAI, APIConnectionError, AuthenticationError
 import httpx
 from app.core.config import settings
 from app.models import ResumeResponse
+from app.consts import RESPONSE_BLOCKS, LANGUAGES
 
 client = OpenAI(api_key=settings.openai_api_key.get_secret_value())
 
 
-def request(input_data):
+def get_system_msg(lang: str):
+    blocks = RESPONSE_BLOCKS[lang]
+    return (
+        "You are a professional resume writer.\n"
+        "Output must be valid JSON that matches the SDK model (two fields only: resume_text, summary).\n"
+        "Language: {lang}. Use the exact section headings below in the same language.\n"
+        "Inside resume_text, produce Markdown with EXACTLY these H2 sections and in this order:\n"
+        f"## {blocks[0]}\n"
+        f"## {blocks[1]}\n"
+        f"## {blocks[2]}\n"
+        f"## {blocks[3]}\n"
+        f"## {blocks[4]}\n\n"
+        "Formatting rules:\n"
+        f"- In '{blocks[1]}' list skills as bullet points.\n"
+        f"- In '{blocks[2]}' list roles/projects as bullets with brief impact lines.\n"
+        f"- In '{blocks[3]}' list degree(s) or courses as bullets.\n"
+        f"- In '{blocks[4]}' include email/phone/city (if provided) as bullets.\n"
+        "Do not add extra sections or keys. Keep summary as a single short paragraph."
+    ).format(lang=LANGUAGES[lang])
+
+
+def request(input_data: dict, lang: str):
+    system_msg = get_system_msg(lang)
     try:
         response = client.responses.parse(
             model="gpt-5",
             text_format=ResumeResponse,
             input=[
-                {"role": "system", "content": "You are a professional resume writer. Return JSON per model."},
-                {"role": "user", "content": f"Build resume form {input_data}"},
+                {"role": "system", "content": system_msg},
+                {
+                    "role": "user", 
+                    "content": (
+                        f"Build resume from JSON (respond in {LANGUAGES[lang]}):\n{input_data}\n"
+                        "Return JSON with keys 'resume_text' and 'summary' only."
+                    )
+                },
             ],
         )
         return {"ok": True, "result": response.output_parsed}
