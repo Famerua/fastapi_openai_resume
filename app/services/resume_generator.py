@@ -1,14 +1,15 @@
 import logging
 
-from openai import OpenAI, APIConnectionError, AuthenticationError
 import httpx
+from openai import APIConnectionError, AuthenticationError, AsyncOpenAI
+
+from app.consts import LANGUAGES, RESPONSE_BLOCKS
 from app.core.config import settings
-from app.models import ResumeResponse, ResumeRequest
-from app.consts import RESPONSE_BLOCKS, LANGUAGES
+from app.models import ResumeRequest, ResumeResponse
 
 logger = logging.getLogger(__name__)
 
-client = OpenAI(api_key=settings.openai_api_key.get_secret_value())
+async_client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
 
 
 def get_system_msg(lang: str) -> str:
@@ -33,12 +34,12 @@ def get_system_msg(lang: str) -> str:
     ).format(lang=LANGUAGES[lang])
 
 
-def request(input_data: ResumeRequest, lang: str):
-    """Request resume data from OpenAI Responses API."""
+async def request(input_data: ResumeRequest, lang: str):
+    """Request resume data from OpenAI Responses API asynchronously."""
     logger.debug("Calling OpenAI for %s (lang=%s)", input_data.full_name, lang)
     system_msg = get_system_msg(lang)
     try:
-        response = client.responses.parse(
+        response = await async_client.responses.parse(
             model="gpt-5",
             text_format=ResumeResponse,
             input=[
