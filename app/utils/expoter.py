@@ -1,10 +1,16 @@
+import logging
+
 from docx import Document
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def generate_resume_docx(
     data: dict, lang: str = "en", title_file: str | None = None
 ) -> Path:
+    """Create a DOCX resume file from structured resume data."""
+    logger.debug("Starting DOCX generation (lang=%s)", lang)
     doc = Document()
 
     doc.add_heading(data.get("summary", "Resume"), level=1)
@@ -30,4 +36,5 @@ def generate_resume_docx(
     )
     path = Path(f"files/{name}")
     doc.save(path)
+    logger.info("DOCX resume saved to %s", path)
     return path

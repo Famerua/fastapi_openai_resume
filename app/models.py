@@ -12,6 +12,7 @@ LanguageLevel = constr(pattern=r"^[A-Za-z\s]+ - [A-Za-z0-9]+$")
 
 
 class ResumeRequest(BaseModel):
+    """Request payload describing the input data for resume generation."""
     full_name: str = Field(..., example="Kozhagaliyev Taubay")
     position: str = Field(..., example="Python Softwate Developer")
     skills: list[str] = Field(..., example=["Python", "SQL", "FastAPI"])

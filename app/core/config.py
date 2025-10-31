@@ -3,6 +3,7 @@ from pydantic import SecretStr
 
 
 class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
     openai_api_key: SecretStr
     debug: bool = True
 
