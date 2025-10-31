@@ -3,20 +3,10 @@ import httpx
 from app.core.config import settings
 from app.models import ResumeResponse
 
-
 client = OpenAI(api_key=settings.openai_api_key.get_secret_value())
 
-input_data = {
-    "full_name": "Taubay Kozhagaliyev",
-    "position": "Python SoftWare Developer",
-    "skills": ["Django", "SQL", "FastAPI"],
-    "experience": "3 years like python developr since 2022",
-    "education": "Bachelor of MIPT",
-    "languages": ["English - B2", "Kazakh - Native", "Russian - fluent"],
-}
 
-
-def test():
+def request(input_data):
     try:
         response = client.responses.parse(
             model="gpt-5",
