@@ -2,6 +2,8 @@ import logging
 
 from fastapi import FastAPI, Query, HTTPException, status
 from typing import Literal
+from app.api.routes import router as history_router
+from app.db import repository
 from app.services import resume_generator
 from app.models import ResumeRequest, ResumeResponse
 from app.utils.expoter import generate_resume_docx
@@ -11,6 +13,12 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+app.include_router(history_router)
+
+
+@app.on_event("startup")
+def on_startup():
+    repository.init_db()
 
 
 @app.post("/generate_resume", summary="Получение резюме")
@@ -18,6 +26,7 @@ async def create_resume(
     data: ResumeRequest,
     lang: Literal["en", "ru", "kz"] = Query("en"),
     gen_file: bool = False,
+    user_email: str = Query("demo@example.com"),
 ):
     """Generate resume content via OpenAI and optionally produce a DOCX file."""
     logger.info("Generating resume for %s (lang=%s, gen_file=%s)", data.full_name, lang, gen_file)
@@ -29,9 +38,13 @@ async def create_resume(
             detail=result.get("error"),
         )
     resume = result.get("result")
+    generation_id = repository.save_generation(
+        user_email=user_email, data=data, resume=resume, lang=lang
+    )
     if gen_file:
         logger.debug("Generating DOCX file for %s", data.full_name)
-        generate_resume_docx(resume.dict(), title_file=data.full_name)
+        path = generate_resume_docx(resume.dict(), title_file=data.full_name)
+        repository.attach_file(generation_id, str(path))
     logger.info("Resume generation completed for %s", data.full_name)
     return resume
 
