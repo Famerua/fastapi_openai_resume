@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# Язык ревью, walkthrough и ответов в чате
+language: "ru-RU"
+
+# Тон ревьюера (макс. 250 символов)
+tone_instructions: "Пиши как опытный backend-инженер: по делу, без воды. Для каждой проблемы указывай последствие и конкретное исправление. Разделяй критичное и стилистику."
+
+early_access: false
+
+reviews:
+  # quiet — только важное, chill — сбалансированно, assertive — максимум замечаний
+  profile: "assertive"
+
+  # Не блокировать мерж статусом "changes requested" — на демо это лишнее
+  request_changes_workflow: false
+
+  # Содержимое walkthrough
+  high_level_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  changed_files_summary: true
+  collapse_walkthrough: false
+  review_details: true
+
+  # Метки предлагать, но не проставлять автоматически
+  suggested_labels: true
+  auto_apply_labels: false
+
+  # Стишок в конце ревью — фирменная фишка, на демо заходит
+  poem: true
+
+  # Блок "Prompt for AI Agents" в комментариях — удобно показать связку с Cursor/Claude Code
+  enable_prompt_for_ai_agents: true
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    # Ревьюить PR не только в дефолтную ветку
+    base_branches:
+      - ".*"
+
+  # Не ревьюить служебные файлы
+  path_filters:
+    - "!**/*.lock"
+    - "!**/poetry.lock"
+    - "!**/uv.lock"
+    - "!**/migrations/versions/**"
+    - "!**/*.min.js"
+
+  # Акценты для конкретных путей
+  path_instructions:
+    - path: "**/*.py"
+      instructions: |
+        Проверяй: обработку исключений (не проглатываются ли ошибки),
+        валидацию входных данных, отсутствие секретов в коде,
+        корректность async/await и отсутствие блокирующих вызовов в корутинах.
+    - path: "app/api/**/*.py"
+      instructions: |
+        Это HTTP-слой FastAPI. Смотри на response_model, коды ответов,
+        обработку ошибок через HTTPException, зависимости авторизации
+        и на то, не утекают ли внутренние детали в ответ клиенту.
+    - path: "**/{models,repositories,db}/**/*.py"
+      instructions: |
+        Слой данных. Ищи SQL-инъекции (конкатенация строк в запросах),
+        проблемы N+1, отсутствие индексов, незакрытые сессии и транзакции.
+    - path: "**/tests/**/*.py"
+      instructions: |
+        Проверяй покрытие граничных случаев и негативных сценариев.
+        Стилистические замечания к тестам не пиши.
+
+  # Пре-мерж проверки: предупреждать, но не блокировать
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: "Заголовок в формате Conventional Commits, до 72 символов."
+    description:
+      mode: "warning"
+    issue_assessment:
+      mode: "warning"
+
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+
+  tools:
+    ruff:
+      enabled: true
+    gitleaks:
+      enabled: true
+    semgrep:
+      enabled: true
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    hadolint:
+      enabled: true
+    languagetool:
+      enabled: false
+
+chat:
+  auto_reply: true
+  art: true
+
+knowledge_base:
+  learnings:
+    scope: "local"
+  pull_requests:
+    scope: "local"
+  web_search:
+    enabled: true
+
+code_generation:
+  docstrings:
+    language: "ru-RU"
